@@ -1,6 +1,6 @@
 # log_parser
 
-Parse last date log and updtae html report
+Parsing log with a last date and updtae html report
 
 Run
 
