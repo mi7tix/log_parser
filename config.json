@@ -1,7 +1,8 @@
 {
  "SUCSESSFUL_PERCENT": "0.95", 
  "REPORT_DIR": "../reports", 
- "LOG_DIR": "./log", 
+ "LOG_DIR": "./log",
+ "LOGGING_FILE": "./log/parser.log" 
  "REPORT_SIZE": 1000, 
  "REPORT_FILE": "./report.html"
  }
