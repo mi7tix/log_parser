@@ -23,7 +23,7 @@ import statistics
 from subscription_manager.managerlib import cfg
 
 
-config_path = './config.json'
+CONFIG_PATH = './config.json'
 
 
 config = {
@@ -70,19 +70,14 @@ def config_read_values(path):
     """    
     try:
         with open(path) as cfg_file:
-            read_config = json.loads(cfg_file.read(config_path))
+            read_config = json.loads(CONFIG_PATH)
             if path:
-                alter_config = json.loads(cfg_file.read(path))
+                alter_config = json.loads(path)
                 read_config.update(alter_config)
             return read_config
     except Exception as e:
-        logger.info("Cannot read config file,{}".format(e))
+        logging.info("Cannot read config file,{}".format(e))
 
-
-def init_report_dir(conf):
-    report_dir = conf.get('REPORT_DIR')
-    if not os.path.exists(report_dir):
-        os.mkdir(report_dir)
 
 def last_log_search(log_dir):
     """
@@ -92,20 +87,31 @@ def last_log_search(log_dir):
     Returns:
         last find logs to current date
     """
+    if not os.path.isdir(log_dir):
+        raise FileNotFoundError('Log dir not found')
+
+    last_log_info = None
+
     r = re.compile(r'^nginx-access-ui\.log-(?P<date>\d{8})(\.gz)?$')
     for logs in os.listdir(log_dir):
         ref = r.match(logs)
         if not ref:
             continue
+        date_str = ref.groupdict()['date']
         try:
-            date_str = ref.groupdict()['date']
             parsed_date = datetime.strptime(date_str, "%Y%m%d")
         except Exception as e:
             logging.info("Cannot initiate last log datetime {}".format(e))
-            if not log_date or parsed_date > log_date.date :
-                last_log = log_date(parsed_date, os.path.join(log_dir, logs))
-                logging.info('Last log found {}'.format(log_date.path))
-                return last_log
+            continue
+        
+        if not last_log_info.date or parsed_date > last_log_info.date :
+            last_log_info = log_date(parsed_date, os.path.join(log_dir, logs))
+            logging.info('Last log found {}'.format(last_log_info.date.path))
+            
+    if not last_log_info:
+        raise FileNotFoundError('Log file not found')  
+     
+    return last_log_info
                
 
 def process_line(line, line_number):
@@ -113,7 +119,10 @@ def process_line(line, line_number):
     line parser for values
     """
     values = line.split(' ')
-    url = values[7]
+    try:
+        url = values[7]
+    except Exception as e:
+        logging.info('Cannot find last element {} '.format(e))
     request_time = float(values[-1])
     return {'url': url, 'request_time': request_time}
     
